@@ -1,0 +1,101 @@
+---
+title: "UAS_KOMPUTASI STATISTIKA LANJUT"
+author: "MEGA AFSARI"
+date: '2022-12-20'
+output: html_document
+---
+
+```{r }
+library(tm)
+library(SnowballC)
+library(wordcloud)
+library(RColorBrewer)
+library(syuzhet)
+library(ggplot2)
+```
+
+
+```{r cars}
+# import data teks
+Dtmegaaf <- read.csv("D:/mega/Dtmegaaf.csv", sep=";", stringsAsFactors=TRUE)
+data2 <-Dtmegaaf$content
+
+```
+
+
+```{r }
+# konversi vektor teks menjadi kumpulan dokumen
+words.vec <- VectorSource(data2)
+words.corpus <- Corpus(words.vec)
+
+```
+
+```{r}
+# buat transformator konten yang menggantikan pola string dengan spasi
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+docs <- tm_map(words.corpus, toSpace, "/")
+docs <- tm_map(docs, toSpace, "@")
+docs <- tm_map(docs, toSpace, "\\|")
+
+# mengubah teks menjadi huruf kecil
+docs <- tm_map(docs, content_transformer(tolower))
+
+# Menghapus Angka
+docs <- tm_map(docs, removeNumbers)
+
+#hapus stopwords umum bahasa Inggris
+docs <- tm_map(docs, removeWords, stopwords("english"))
+
+#remove punctuations
+docs <- tm_map(docs, removePunctuation)
+
+# menghilangkan ruang putih ekstra
+docs <- tm_map(docs, stripWhitespace)
+
+# hapus kata berhenti Anda sendiri
+docs <- tm_map(docs, removeWords, c("rated", "ratedn", "place"))
+
+```
+
+```{r}
+# Bangun matriks istilah-dokumen
+docs_dtm <- TermDocumentMatrix(docs)
+dtm_m <- as.matrix(docs_dtm)
+
+# Bangun matriks istilah-dokumen
+docs_dtm <- TermDocumentMatrix(docs)
+dtm_m <- as.matrix(docs_dtm)
+
+# Urutkan berdasarkan penurunan nilai frekuensi
+dtm_v <- sort(rowSums(dtm_m),decreasing=TRUE)
+dtm_d <- data.frame(word = names(dtm_v),freq=dtm_v)
+
+# Tampilkan 5 kata paling sering teratas
+head(dtm_d, 5)
+```
+
+```{r}
+# Plot kata-kata yang paling sering
+barplot(dtm_d[1:5,]$freq, las = 2, names.arg = dtm_d[1:5,]$word,
+        col ="green", main ="Top 5 most frequent words",
+        ylab = "Word frequencies")
+
+```
+
+```{r}
+# mengonversi korpus menjadi data.frame
+dtm <- TermDocumentMatrix(docs)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing = TRUE)
+df <- data.frame(word = names(v),freq = v)
+```
+
+```{r}
+# membuat wordcloud
+library(wordcloud)
+set.seed(123)
+wordcloud(words = df$word, freq = df$freq, min.freq = 9,
+          max.words = 100, random.order = FALSE, rot.per = 0.35,
+          colors = brewer.pal(8, "Dark2"))
+```
+
